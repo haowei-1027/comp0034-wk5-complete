@@ -2,6 +2,8 @@
 
 _Completed version of the week 5 activities_
 
+TODO: Fix error in auth tests
+
 ## 1. Preparation and introduction
 
 This assumes you have already forked the coursework repository and cloned the resulting repository to your IDE.

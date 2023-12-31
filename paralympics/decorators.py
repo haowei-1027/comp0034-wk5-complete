@@ -1,7 +1,6 @@
 from functools import wraps
 import jwt
-from flask import request, make_response
-from flask import current_app as app
+from flask import request, make_response, current_app as app
 from paralympics import db
 from paralympics.models import User
 

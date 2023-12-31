@@ -7,3 +7,5 @@ pandas
 pytest
 selenium
 pytest-cov
+PyJWT
+faker
