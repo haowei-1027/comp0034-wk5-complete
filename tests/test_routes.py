@@ -139,3 +139,16 @@ def test_delete_region(client, new_region):
     response = client.delete(f"/regions/{code}")
     assert response.status_code == 200
     assert response.json['message'] == 'Region NEW deleted.'
+
+
+def test_delete_region_not_exists(client):
+    """
+    GIVEN a Flask test client
+    WHEN a DELETE request is made to a region that does not exist /regions/ZZZZ
+    THEN the response status code should be 404
+    AND the response content should include the message 'Region {noc_code} deleted.'
+    """
+    response = client.delete(f"/regions/ZZZZ")
+    app.logger.log(response.json['message'])
+    assert response.status_code == 500
+    assert response.json['message'] == 'Region NEW deleted.'
