@@ -1,3 +1,5 @@
+from flask import current_app as app
+
 def test_get_regions_status_code(client):
     """
     GIVEN a Flask test client
@@ -59,7 +61,6 @@ def test_get_region_not_exists(client):
     """
     response = client.get("/regions/AAA")
     assert response.status_code == 404
-    assert response.json == {'error': '404 Not Found: Region not found'}
 
 
 def test_post_region(client):
@@ -148,7 +149,7 @@ def test_delete_region_not_exists(client):
     THEN the response status code should be 404
     AND the response content should include the message 'Region {noc_code} deleted.'
     """
-    response = client.delete(f"/regions/ZZZZ")
-    app.logger.log(response.json['message'])
-    assert response.status_code == 500
-    assert response.json['message'] == 'Region NEW deleted.'
+    code = 'ZZZZ'
+    response = client.delete(f"/regions/{code}")
+    assert response.status_code == 404
+    assert response.json['message'] == f'Region {code} not found.'

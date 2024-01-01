@@ -77,7 +77,8 @@ def add_region():
    region_schema.loads()
 
     Returns: 
-        JSON
+        JSON message  If there is an error, return 400if the issue is with the validation, 500 if there is a
+        database issue, otherwise return message 'Region added with NOC= {region.NOC}'
     """
     json_data = request.get_json()
     try:
@@ -94,8 +95,8 @@ def add_region():
 
     except ValidationError as e:
         app.logger.error(f"A Marshmallow ValidationError loading the region: {str(e)}")
-        msg = {'message': "An Internal Server Error occurred."}
-        return make_response(msg, 500)
+        msg = {'message': "The Region details failed validation."}
+        return make_response(msg, 400)
 
 
 @app.delete('/regions/<noc_code>')
@@ -116,13 +117,13 @@ def delete_region(noc_code):
         # Log the exception with the error
         app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
         # Report a 404 error to the user who made the request
-        msg_content = f'Region {noc_code} not found'
+        msg_content = f'Region {noc_code} not found.'
         msg = {'message': msg_content}
-        return make_response(msg, 500)
+        return make_response(msg, 404)
 
 
-@app.patch("/regions/<noc_code>")
 @token_required
+@app.patch("/regions/<noc_code>")
 def update_region(noc_code):
     """Updates changed fields for the specified region.
 
@@ -136,21 +137,25 @@ def update_region(noc_code):
             If the update is not saved, return 500
             If all OK then return 200
     """
+    app.logger.error(f"Started the patch")
     # Find the region in the database
     try:
         existing_region = db.session.execute(
             db.select(Region).filter_by(NOC=noc_code)
         ).scalar_one_or_none()
     except exc.SQLAlchemyError as e:
+        app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
         msg_content = f'Region {noc_code} not found'
         msg = {'message': msg_content}
         return make_response(msg, 404)
     # Get the updated details from the json sent in the HTTP patch request
     region_json = request.get_json()
+    app.logger.error(f"region_json: {str(region_json)}")
     # Use Marshmallow to update the existing records with the changes from the json
     try:
         region_update = region_schema.load(region_json, instance=existing_region, partial=True)
     except ValidationError as e:
+        app.logger.error(f"A Marshmallow schema validation error occurred: {str(e)}")
         msg = f'Failed Marshmallow schema validation'
         return make_response(msg, 500)
     # Commit the changes to the database
@@ -161,6 +166,7 @@ def update_region(noc_code):
         response = {"message": f"Region {noc_code} updated."}
         return response
     except exc.SQLAlchemyError as e:
+        app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
         msg = f'An Internal Server Error occurred.'
         return make_response(msg, 500)
 
@@ -238,9 +244,9 @@ def event_update(event_id):
     # Get the updated details from the json sent in the HTTP patch request
     event_json = request.get_json()
     # Use Marshmallow to update the existing records with the changes from the json
-    event_update = event_schema.load(event_json, instance=existing_event, partial=True)
+    event_updated = event_schema.load(event_json, instance=existing_event, partial=True)
     # Commit the changes to the database
-    db.session.add(event_update)
+    db.session.add(event_updated)
     db.session.commit()
     # Return json success message
     response = {"message": f"Event with id={event_id} updated."}
@@ -263,14 +269,17 @@ def login():
     if not auth or not auth.get('email') or not auth.get('password'):
         msg = {'message': 'Missing email or password'}
         return make_response(msg, 401)
+
     # Find the user in the database
     user = db.session.execute(
         db.select(User).filter_by(email=auth.get("email"))
     ).scalar_one_or_none()
+
     # If the user is not found, return 401 error
     if not user:
         msg = {'message': 'No account for that email address. Please register.'}
         return make_response(msg, 401)
+
     # Check if the password matches the hashed password using the check_password function you added to User in models.py
     if user.check_password(auth.get('password')):
         # Log when the user logged in
@@ -291,6 +300,7 @@ def login():
             # Matches the algorithm in the decode() in the decorator
             algorithm='HS256'
         )
+        app.logger.debug(f'Token {token}')
         return make_response(jsonify({'token': token}), 201)
     # If the password does not match the hashed password, return 403 error
     msg = {'message': 'Incorrect password.'}
@@ -327,7 +337,8 @@ def register():
             # Log the registered user
             app.logger.info(f"{user.email} registered at {datetime.utcnow()}")
             return make_response(jsonify(response)), 201
-        except Exception as err:
+        except exc.SQLAlchemyError as e:
+            app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
             response = {
                 "message": "An error occurred. Please try again.",
             }

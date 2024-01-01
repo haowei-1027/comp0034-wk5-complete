@@ -21,8 +21,7 @@ def test_login_success(client, new_user):
     assert user_register.status_code == 201
 
 
-# TODO: Debug, does not work. Appears not to identify current_user.
-def test_user_logged_in_user_can_edit_region(client, new_user, login_token, new_region):
+def test_user_logged_in_user_can_edit_region(app, client, new_user, login_token, new_region):
     """
     GIVEN a registered user that is successfully logged in
     AND a route that is protected by login
@@ -37,11 +36,15 @@ def test_user_logged_in_user_can_edit_region(client, new_user, login_token, new_
     # pass the token in the headers of the HTTP request
     headers = {
         'content-type': "application/json",
+        # 'Authorization': f'Bearer {login_token}'
         'Authorization': login_token
     }
+    with app.app_context():
+        app.logger.info(f'Token is {login_token}')
     response = client.patch(url, json=new_region_notes, headers=headers)
     assert response.json['message'] == 'Region NEW updated.'
     assert response.status_code == 200
+
 
 
 def test_user_not_logged_in_cannot_edit_region(client, new_user, new_region):
@@ -50,7 +53,7 @@ def test_user_not_logged_in_cannot_edit_region(client, new_user, new_region):
     AND a route that is protected by login
     AND a new Region that can be edited
     WHEN a PATCH request to /regions/<code> is made
-    THEN the HTTP response status code should be 401
+    THEN the HTTP response status code should be 401 with message 'Authentication token missing
     """
     new_region_notes = {'notes': 'An updated note'}
     code = new_region['NOC']

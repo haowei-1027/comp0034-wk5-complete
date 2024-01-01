@@ -1,4 +1,4 @@
-from flask import json, current_app as app, jsonify
+from flask import json, current_app as app, jsonify, make_response
 from marshmallow.exceptions import ValidationError
 from werkzeug.exceptions import HTTPException
 
@@ -20,15 +20,7 @@ def handle_exception(e):
         return e
 
     # now you're handling non-HTTP exceptions only
-    response = e.get_response()
-    # replace the body with JSON
-    response.data = json.dumps({
-        "code": 500,
-        "name": e.name,
-        "description": e.description,
-    })
-    response.content_type = "application/json"
-    return response
+    return jsonify(error=str(e)), 500
 
 
 @app.errorhandler(HTTPException)

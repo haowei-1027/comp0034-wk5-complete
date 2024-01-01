@@ -4,6 +4,7 @@ import string
 import secrets
 from pathlib import Path
 
+import jwt
 import pytest
 from faker import Faker
 from flask import abort
@@ -109,18 +110,17 @@ def random_user_json():
 
 
 @pytest.fixture(scope="function")
-def login_token(client, new_user):
+def login_token(client, new_user, app):
     """Gets a login token"""
     # Login
     # If login fails then the fixture fails. It may be possible to 'mock' this instead if you want to investigate it.
-    user_login = client.post('/login', json=new_user, content_type="application/json")
+
+    # Login returns the token in the data, so user_login contains the token
+    response = client.post('/login', json=new_user, content_type="application/json")
 
     # Get the token, this uses the returned json data from the decorator function
-    data = json.loads(user_login.data.decode())
-    token = data['token']
-
+    token = response.json['token']
     if not token:
-        abort(401, description="Login failed in login_token fixture")
+        abort(401, description="Login failed in login fixture, no token.")
 
-    # Yield the token
     yield token

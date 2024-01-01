@@ -27,10 +27,11 @@ def token_required(f):
         try:
             # Use PyJWT.decode(token, key, algorithms) to decode the token with the public key for the app
             # See https://pyjwt.readthedocs.io/en/latest/api.html
+            app.logger.debug(f' Token before decode {token}')
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             # Find the user in the database using their email address which is in the data of the decoded token
             current_user = db.session.execute(
-                db.select(User).filter_by(email=data.get("email"))
+                db.select(User).filter_by(id=data.get("user_id"))
             ).scalar_one_or_none()
         # If the email is not found, the token is likely invalid so return 401 error
         except:
