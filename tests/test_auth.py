@@ -46,7 +46,7 @@ def test_user_logged_in_user_can_edit_region(app, client, new_user, login_token,
     assert response.status_code == 200
 
 
-
+# TODO: Fix error with this test
 def test_user_not_logged_in_cannot_edit_region(client, new_user, new_region):
     """
     GIVEN a registered user that is not logged in
