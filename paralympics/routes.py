@@ -7,7 +7,7 @@ from marshmallow.exceptions import ValidationError
 
 from paralympics import db
 from paralympics.models import Region, Event, User
-from paralympics.schemas import RegionSchema, EventSchema
+from paralympics.schemas import RegionSchema, EventSchema, UserSchema
 from paralympics.decorators import token_required
 
 # Flask-Marshmallow Schemas
@@ -15,6 +15,7 @@ regions_schema = RegionSchema(many=True)
 region_schema = RegionSchema()
 events_schema = EventSchema(many=True)
 event_schema = EventSchema()
+user_schema = UserSchema()
 
 
 # REGION ROUTES
@@ -254,6 +255,48 @@ def event_update(event_id):
 
 
 # AUTHENTICATION ROUTES
+@app.post("/register")
+def register():
+    """Register a new user for the REST API
+
+    If successful, return 201 Created.
+    If email already exists, return 409 Conflict (resource already exists).
+    If any other error occurs, return 500 Server error
+    """
+    # Get the JSON data from the request
+    user_json = request.get_json()
+    # Check if user already exists, returns None if the user does not exist
+    user = db.session.execute(
+        db.select(User).filter_by(email=user_json.get("email"))
+    ).scalar_one_or_none()
+    if not user:
+        try:
+            # Create new User object
+            user = User(email=user_json.get("email"))
+            # Set the hashed password
+            user.set_password(password=user_json.get("password"))
+            # Add user to the database
+            db.session.add(user)
+            db.session.commit()
+            # Return success message
+            response = {
+                "message": "Successfully registered.",
+            }
+            # Log the registered user
+            app.logger.info(f"{user.email} registered at {datetime.utcnow()}")
+            return make_response(jsonify(response)), 201
+        except exc.SQLAlchemyError as e:
+            app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
+            response = {
+                "message": "An error occurred. Please try again.",
+            }
+            return make_response(jsonify(response)), 500
+    else:
+        response = {
+            "message": "User already exists. Please Log in.",
+        }
+        return make_response(jsonify(response)), 409
+
 @app.post('/login')
 def login():
     """Logins in the User and generates a token
@@ -307,44 +350,3 @@ def login():
     return make_response(msg, 403)
 
 
-@app.post("/register")
-def register():
-    """Register a new user for the REST API
-
-    If successful, return 201 Created.
-    If email already exists, return 409 Conflict (resource already exists).
-    If any other error occurs, return 500 Server error
-    """
-    # Get the JSON data from the request
-    post_data = request.get_json()
-    # Check if user already exists, returns None if the user does not exist
-    user = db.session.execute(
-        db.select(User).filter_by(email=post_data.get("email"))
-    ).scalar_one_or_none()
-    if not user:
-        try:
-            # Create new User object
-            user = User(email=post_data.get("email"))
-            # Set the hashed password
-            user.set_password(password=post_data.get("password"))
-            # Add user to the database
-            db.session.add(user)
-            db.session.commit()
-            # Return success message
-            response = {
-                "message": "Successfully registered.",
-            }
-            # Log the registered user
-            app.logger.info(f"{user.email} registered at {datetime.utcnow()}")
-            return make_response(jsonify(response)), 201
-        except exc.SQLAlchemyError as e:
-            app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")
-            response = {
-                "message": "An error occurred. Please try again.",
-            }
-            return make_response(jsonify(response)), 500
-    else:
-        response = {
-            "message": "User already exists. Please Log in.",
-        }
-        return make_response(jsonify(response)), 409
