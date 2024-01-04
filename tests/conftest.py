@@ -47,6 +47,18 @@ def client(app):
     return app.test_client()
 
 
+# This is an alternative to the client fixtures above, do not add this as well as the client fixture but use it
+# as a replacement!
+# From Patrick Kennedy: https://gitlab.com/patkennedy79/flask_user_management_example/-/blob/main/tests/conftest.py
+@pytest.fixture(scope='module')
+def test_client(app):
+    # Create a test client using the Flask application configured for testing
+    with app.test_client() as testing_client:
+        # Establish an application context
+        with app.app_context():
+            yield testing_client  # this is where the testing happens!
+
+
 @pytest.fixture(scope='function')
 def new_region(app):
     """Create a new region and add to the database.
