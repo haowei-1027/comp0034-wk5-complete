@@ -1,5 +1,6 @@
 from flask import current_app as app
 
+
 def test_get_regions_status_code(client):
     """
     GIVEN a Flask test client
@@ -109,7 +110,7 @@ def test_region_post_region_exists(client):
     assert response.status_code == 200
 
 
-# The following has been replaced by tests in the test_auth.py file
+# The following has been replaced by tests in the test_auth.py file.
 '''
 def test_patch_region(client, new_region):
     """

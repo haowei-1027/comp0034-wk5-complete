@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import jwt
 from flask import current_app as app, request, abort, jsonify, make_response
 from sqlalchemy import exc
 from marshmallow.exceptions import ValidationError
@@ -8,7 +7,7 @@ from marshmallow.exceptions import ValidationError
 from paralympics import db
 from paralympics.models import Region, Event, User
 from paralympics.schemas import RegionSchema, EventSchema, UserSchema
-from paralympics.decorators import token_required
+from paralympics.utilities import token_required, encode_auth_token
 
 # Flask-Marshmallow Schemas
 regions_schema = RegionSchema(many=True)
@@ -123,8 +122,8 @@ def delete_region(noc_code):
         return make_response(msg, 404)
 
 
-@token_required
 @app.patch("/regions/<noc_code>")
+@token_required
 def update_region(noc_code):
     """Updates changed fields for the specified region.
 
@@ -297,17 +296,17 @@ def register():
         }
         return make_response(jsonify(response)), 409
 
+
 @app.post('/login')
 def login():
     """Logins in the User and generates a token
 
     If the email and password are not present in the HTTP request, return 401 error
-    If the user is not found in the database, return 401 error
-    If the password does not math the hashed password, return 403 error
-    If the token is not generated or any other error occurs, return 500 Server error
+    If the user is not found in the database, or the password is incorrect, return 401 error
     If the user is logged in and the token is generated, return the token and 201 Success
     """
     auth = request.get_json()
+
     # Check the email and password are present, if not return a 401 error
     if not auth or not auth.get('email') or not auth.get('password'):
         msg = {'message': 'Missing email or password'}
@@ -318,35 +317,13 @@ def login():
         db.select(User).filter_by(email=auth.get("email"))
     ).scalar_one_or_none()
 
-    # If the user is not found, return 401 error
-    if not user:
-        msg = {'message': 'No account for that email address. Please register.'}
+    # If the user is not found, or the password is incorrect, return 401 error
+    if not user or not user.check_password(auth.get('password')):
+        msg = {'message': 'Incorrect email or password.'}
         return make_response(msg, 401)
 
-    # Check if the password matches the hashed password using the check_password function you added to User in models.py
-    if user.check_password(auth.get('password')):
-        # Log when the user logged in
-        app.logger.info(f"{user.email} logged in at {datetime.utcnow()}")
-        # The user is now verified so create the token
-        # See https://pyjwt.readthedocs.io/en/latest/api.html for the parameters
-        token = jwt.encode(
-            # Sets the token to expire in 5 mins
-            payload={
-                "exp": datetime.utcnow() + timedelta(minutes=5),
-                "iat": datetime.utcnow(),
-                "sub": user.id,
-            },
-            # Flask app secret key, matches the key used in the decode() in the decorator
-            key=app.config['SECRET_KEY'],
-            # The id field from the User in models
-            headers={'user_id': user.id},
-            # Matches the algorithm in the decode() in the decorator
-            algorithm='HS256'
-        )
-        app.logger.debug(f'Token {token}')
-        return make_response(jsonify({'token': token}), 201)
-    # If the password does not match the hashed password, return 403 error
-    msg = {'message': 'Incorrect password.'}
-    return make_response(msg, 403)
+    # If all OK then create the token
+    token = encode_auth_token(user.id)
 
-
+    # Return the token and the user_id of the logged in user
+    return make_response(jsonify({"user_id": user.id, "token": token}), 201)

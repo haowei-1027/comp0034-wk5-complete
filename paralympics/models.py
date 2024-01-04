@@ -43,7 +43,7 @@ class User(db.Model):
     password_hash: Mapped[str] = mapped_column(db.String, unique=True, nullable=False)
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return '<User {}>'.format(self.email)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

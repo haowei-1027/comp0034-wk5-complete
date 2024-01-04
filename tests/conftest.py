@@ -31,6 +31,7 @@ def app():
     test_cfg = {
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///" + str(db_path),
+        # "SQLALCHEMY_ECHO": True
     }
     app = create_app(test_config=test_cfg)
 
@@ -122,17 +123,11 @@ def random_user_json():
 
 
 @pytest.fixture(scope="function")
-def login_token(client, new_user, app):
-    """Gets a login token"""
+def login(client, new_user, app):
+    """Returns login response"""
     # Login
     # If login fails then the fixture fails. It may be possible to 'mock' this instead if you want to investigate it.
-
-    # Login returns the token in the data, so user_login contains the token
     response = client.post('/login', json=new_user, content_type="application/json")
-
-    # Get the token, this uses the returned json data from the decorator function
-    token = response.json['token']
-    if not token:
-        abort(401, description="Login failed in login fixture, no token.")
-
-    yield token
+    # Get returned json data from the login function
+    data = response.json
+    yield data
