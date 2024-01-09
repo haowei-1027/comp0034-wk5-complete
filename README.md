@@ -2,11 +2,9 @@
 
 _Completed version of the week 5 activities_
 
-TODO: Fix error in auth tests
-
 ## 1. Preparation and introduction
 
-This assumes you have already forked the coursework repository and cloned the resulting repository to your IDE.
+This assumes you have already forked the repository and cloned the resulting repository to your IDE.
 
 1. Create and activate a virtual environment
 2. Install the requirements `pip install -r requirements.txt`

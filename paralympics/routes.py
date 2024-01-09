@@ -7,7 +7,7 @@ from marshmallow.exceptions import ValidationError
 from paralympics import db
 from paralympics.models import Region, Event, User
 from paralympics.schemas import RegionSchema, EventSchema, UserSchema
-from paralympics.utilities import token_required, encode_auth_token
+from paralympics.helpers import token_required, encode_auth_token
 
 # Flask-Marshmallow Schemas
 regions_schema = RegionSchema(many=True)

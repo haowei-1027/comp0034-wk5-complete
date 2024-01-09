@@ -1,13 +1,10 @@
-import json
 import os
 import string
 import secrets
 from pathlib import Path
 
-import jwt
 import pytest
 from faker import Faker
-from flask import abort
 from sqlalchemy import exists
 from paralympics import create_app, db
 from paralympics.models import Region, User
