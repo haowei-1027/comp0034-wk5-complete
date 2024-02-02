@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from flask import current_app as app, request, abort, jsonify, make_response
 from sqlalchemy import exc
@@ -282,7 +282,7 @@ def register():
                 "message": "Successfully registered.",
             }
             # Log the registered user
-            app.logger.info(f"{user.email} registered at {datetime.utcnow()}")
+            app.logger.info(f"{user.email} registered at {datetime.datetime.now(datetime.UTC)}")
             return make_response(jsonify(response)), 201
         except exc.SQLAlchemyError as e:
             app.logger.error(f"A SQLAlchemy database error occurred: {str(e)}")

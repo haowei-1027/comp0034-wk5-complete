@@ -1,5 +1,5 @@
 [project]
-name = "paralympics"
+name = "comp0034-wk5-complete"
 version = "1.0.0"
 description = "Paralympics testing activities"
 dependencies = [
@@ -9,7 +9,8 @@ dependencies = [
     "marshmallow-sqlalchemy",
     "pandas",
     "selenium",
-    "pytest"
+    "pytest",
+    "pyarrow"
 ]
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
@@ -21,7 +22,6 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["paralympics"]  # list of folders that contain the packages (["."] by default)
 include = ["paralympics*"]  # package names should match these glob patterns (["*"] by default)
 exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by default)
 namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
@@ -30,12 +30,6 @@ namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 [tool.pytest.ini_options]
 addopts = "--verbose"
 testpaths = ["tests"]
-xfail_strict = true
-filterwarnings = [
-    "error",
-    # pytest's own futurewarnings
-    "ignore::pytest.PytestExperimentalApiWarning",
-]
 
 # https://flask.palletsprojects.com/en/2.3.x/tutorial/tests/#running-the-tests
 [tool.coverage.run]
